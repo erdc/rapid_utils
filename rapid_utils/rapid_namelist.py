@@ -5,8 +5,8 @@ import warnings
 import numpy as np
 from netCDF4 import Dataset
 
-def formatted_warning(message, category, filename, lineno): #, file=None,
-                      # line=None):
+def formatted_warning(message, category, filename, lineno, file=None,
+                      line=None):
     """Format a warning message to give useful information on one line.
 
     Parameters
@@ -26,13 +26,13 @@ def formatted_warning(message, category, filename, lineno): #, file=None,
 
 warnings.formatwarning = formatted_warning
 
-def read_table_from_file(fname, ftype, delimiter=',', dtype=float,
+def read_table_from_file(filename, ftype, delimiter=',', dtype=float,
                          usecols=None):
     """Convenience function for extracting data from a text-based file.
 
     Parameters
     ----------
-    fname : str
+    filename : str
         Name of file from which to extract data.
 
     Returns
@@ -40,17 +40,17 @@ def read_table_from_file(fname, ftype, delimiter=',', dtype=float,
     table : ndarray
         Data extracted from file.
     """
-    if fname is None:
+    if filename is None:
         warnings.warn(f'No {ftype} file specified.')
         table = None
-    elif os.path.exists(fname):
+    elif os.path.exists(filename):
         try:
             table = np.genfromtxt(
-                fname, delimiter=delimiter, dtype=dtype, usecols=usecols)
+                filename, delimiter=delimiter, dtype=dtype, usecols=usecols)
         except IOError:
-            warnings.warn(f'Unable to read {ftype} file {fname}.')
+            warnings.warn(f'Unable to read {ftype} file {filename}.')
     else:
-        warnings.warn(f'{ftype} file {fname} not found.')
+        warnings.warn(f'{ftype} file {filename} not found.')
         table = None
 
     return table
@@ -81,6 +81,7 @@ class RAPIDNamelist:
     """Tools for reading, writing and updating a RAPID namelist file."""
 
     # TODO: Add methods for updating forcing and optimization parameters.
+    # TODO: Add methods to parse "Qfor" file.
 
     def __init__(self,
                  output_filename='rapid_namelist',
@@ -135,15 +136,15 @@ class RAPIDNamelist:
             'IS_riv_bas': 0,
             'IS_riv_tot': 0,
             'IS_strt_opt': 0,
-            'Qfinal_file': '',
-            'Qfor_file': '',
-            'Qinit_file': '',
-            'Qobs_file': '',
-            'Qobsbarrec_file': '',
-            'QoutRabsmax_file': '',
-            'QoutRabsmin_file': '',
-            'Qout_file': '',
-            'Vlat_file': '',
+            'Qfinal_file': None,
+            'Qfor_file': None,
+            'Qinit_file': None,
+            'Qobs_file': None,
+            'Qobsbarrec_file': None,
+            'QoutRabsmax_file': None,
+            'QoutRabsmin_file': None,
+            'Qout_file': None,
+            'Vlat_file': None,
             'ZS_TauM': 0,
             'ZS_TauO': 0,
             'ZS_TauR': 0,
@@ -154,15 +155,15 @@ class RAPIDNamelist:
             'ZS_knorm_init': 0,
             'ZS_phifac': 0,
             'ZS_xnorm_init': 0,
-            'babsmax_file': '',
-            'dam_tot_id_file': '',
-            'dam_use_id_file': '',
-            'for_tot_id_file': '',
-            'for_use_id_file': '',
+            'babsmax_file': None,
+            'dam_tot_id_file': None,
+            'dam_use_id_file': None,
+            'for_tot_id_file': None,
+            'for_use_id_file': None,
             'k_file': 'input/k.csv',
-            'kfac_file': '',
-            'obs_tot_id_file': '',
-            'obs_use_id_file': '',
+            'kfac_file': None,
+            'obs_tot_id_file': None,
+            'obs_use_id_file': None,
             'rapid_connect_file': 'input/rapid_connect.csv',
             'riv_bas_id_file': 'input/riv_bas_id.csv',
             'x_file': 'input/x.csv',
@@ -181,12 +182,12 @@ class RAPIDNamelist:
         self.input_time_units = ''
         self.n_time_steps = None
 
-    def read_namelist(self, fname=None, comment_char='!'):
+    def read_namelist(self, filename=None, comment_char='!'):
         """Read an existing namelist file.
 
         Parameters
         ----------
-        fname : str
+        filename : str
             Name of existing namelist file to be read.
         comment_char : str (optional)
             Character indicating that a line should be ignored.
@@ -198,14 +199,14 @@ class RAPIDNamelist:
         """
         parsed = {}
 
-        if fname is None:
+        if filename is None:
             warnings.warn('No input filename specified. Returning empty '
                           + 'dictionary.')
-        elif not os.path.exists(fname):
-            warnings.warn(f'File {fname} not found. Returning empty '
+        elif not os.path.exists(filename):
+            warnings.warn(f'File {filename} not found. Returning empty '
                           + 'dictionary.')
         else:
-            with open(fname, 'r', encoding='utf8') as f:
+            with open(filename, 'r', encoding='utf8') as f:
                 for line in f:
                     if line.startswith(comment_char):
                         continue
@@ -220,8 +221,11 @@ class RAPIDNamelist:
 
         return parsed
 
-    def write_namelist(self, header='&NL_namelist'):
+    def write_namelist(self, filename=None, header='&NL_namelist'):
         """Write `params` key, value pairs to file."""
+
+        if filename is not None:
+            self.output_filename = filename
 
         end_char = '/'
 
@@ -274,10 +278,10 @@ class RAPIDNamelist:
             Dictionary with `IS_riv_bas` parameter.
         """
         ftype = 'riv_bas_id'
-        fname = self.params['riv_bas_id_file']
+        filename = self.params['riv_bas_id_file']
 
         riv_bas_id_table = read_table_from_file(
-            fname, ftype, delimiter=',', usecols=0, dtype=int)
+            filename, ftype, delimiter=',', usecols=0, dtype=int)
 
         if riv_bas_id_table is None:
             is_riv_bas = 0
@@ -298,10 +302,10 @@ class RAPIDNamelist:
             Dictionary with `IS_riv_tot` and `IS_max_upstream` parameters.
         """
         ftype = 'rapid_connect'
-        fname = self.params['rapid_connect_file']
+        filename = self.params['rapid_connect_file']
 
         rapid_connect_table = read_table_from_file(
-            fname, ftype, delimiter=',', dtype=int)
+            filename, ftype, delimiter=',', dtype=int)
 
         if rapid_connect_table is None:
             is_riv_tot = 0
@@ -325,10 +329,10 @@ class RAPIDNamelist:
             Dictionary with `IS_for_tot` parameter.
         """
         ftype = 'for_tot_id'
-        fname = self.params['for_tot_id_file']
+        filename = self.params['for_tot_id_file']
 
         for_tot_table = read_table_from_file(
-            fname, ftype, delimiter=',', usecols=0, dtype=int)
+            filename, ftype, delimiter=',', usecols=0, dtype=int)
 
         if for_tot_table is None:
             is_for_tot = 0
@@ -349,10 +353,10 @@ class RAPIDNamelist:
             Dictionary with `IS_for_tot` parameter.
         """
         ftype = 'for_use_id'
-        fname = self.params['for_use_id_file']
+        filename = self.params['for_use_id_file']
 
         for_use_table = read_table_from_file(
-            fname, ftype, delimiter=',', usecols=0, dtype=int)
+            filename, ftype, delimiter=',', usecols=0, dtype=int)
 
         if for_use_table is None:
             is_for_use = 0
@@ -363,7 +367,7 @@ class RAPIDNamelist:
 
         return parsed
 
-    def parse_vlat_file_time(self):
+    def parse_vlat_file(self):
         """Read a "vlat" file to determine input time variables.
 
         Returns
@@ -378,63 +382,52 @@ class RAPIDNamelist:
             is found, the length of the time dimension of the runoff variable.
         """
         ftype = 'vlat'
-        fname = self.params['Vlat_file']
+        filename = self.params['Vlat_file']
         runoff_dataset = None
         time_var = None
         runoff_var = None
 
-        if fname is None:
+        print(f'***{filename}***')
+        if filename is None:
             warnings.warn(f'No {ftype} file specified.')
         else:
-            runoff_dataset = Dataset(fname)
+            runoff_dataset = Dataset(filename)
 
         if runoff_dataset is not None:
             try:
                 time_var = runoff_dataset['time']
             except:
                 warnings.warn(
-                    f'Variable "time" not found in {ftype} file {fname}.')
+                    f'Variable "time" not found in {ftype} file {filename}.')
+            try:
+                runoff_var = runoff_dataset[self.runoff_variable_name]
+            except:
+                warnings.warn(f'Variable {self.runoff_variable_name} not ' +
+                              f'found in {ftype} file {filename}.')
 
         if time_var is not None:
             try:
-                self.input_time_array = time_var[:]
+                self.n_time_steps = time_var.shape[0]
             except:
-                warnings.warn('Unable to extract "time" variable as an ' +
-                              f'array in {ftype} file {fname}.')
-
+                warnings.warn('Unable to determine shape of "time" variable ' +
+                              f'in {ftype} file {filename}.')
+            try:
+                self.simulation_time_step_s = time_var[1] - time_var[0]
+            except:
+                warnings.warn('Unable to determine time step size in ' +
+                              f'{ftype} file {filename}.')
             try:
                 self.input_time_units = time_var.units
             except AttributeError:
                 warnings.warn('Unable to access "units" attribute of ' +
-                              '"time" variable in {ftype} file {fname}.')
-
-        try:
-            runoff_var = runoff_dataset[self.runoff_variable_name]
-        except:
-            warnings.warn(f'Variable {self.runoff_variable_name} not ' +
-                          f'found in {ftype} file {fname}.')
-
-        if len(self.input_time_array):
-            self.n_time_steps = len(self.input_time_array)
+                              '"time" variable in {ftype} file {filename}.')
         elif runoff_var is not None:
             self.n_time_steps = runoff_var.shape[self.runoff_time_axis]
         else:
             self.n_time_steps = None
 
-    def determine_simulation_time_parameters(self):
-        """Determine total simulation time and simulation time step."""
-
-        if (not len(self.input_time_array) > 0) and (
-                self.n_time_steps is None):
-            self.parse_vlat_file_time()
-
-        if len(self.input_time_array):
-            self.total_simulation_time_s = (
-                self.input_time_array[-1] - self.input_time_array[0])
-            self.simulation_time_step_s = (
-                self.input_time_array[1] - self.input_time_array[0])
-        elif (self.simulation_time_step_s is not None) and (
-                self.n_time_steps is not None):
+        if (self.n_time_steps is not None) and (
+                self.simulation_time_step_s is not None):
             self.total_simulation_time_s = (
                 self.n_time_steps * self.simulation_time_step_s)
         else:
@@ -443,7 +436,7 @@ class RAPIDNamelist:
         parsed = {'ZS_TauM': self.total_simulation_time_s,
                   'ZS_TauR': self.simulation_time_step_s}
 
-        return parsed
+        return parsed        
 
     def main(self):
         """Update parameters from RAPID input files and write namelist."""
@@ -458,7 +451,7 @@ class RAPIDNamelist:
                    self.parse_connectivity_file,
                    self.parse_forcing_tot_file,
                    self.parse_forcing_use_file,
-                   self.determine_simulation_time_parameters]
+                   self.parse_vlat_file]
 
         for fn in parsers:
             parsed = fn()
@@ -466,6 +459,10 @@ class RAPIDNamelist:
 
         self.update_params(new_params)
 
+        # User specified parameters will overwrite any parameters parsed from
+        # file.
+        self.update_params(self.input_params)
+        
         self.write_namelist()
 
 if __name__ == '__main__':
