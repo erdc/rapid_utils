@@ -5,8 +5,12 @@ import numpy as np
 import rapid_utils.rapid_namelist as rn
 import warnings
 
-DATADIR = 'data'
-OUTPUTDIR = os.path.join(DATADIR, 'output')
+# print(os.path.relpath(os.path.dirname(__file__)))
+# sys.exit(0)
+
+TEST_DIR = os.path.relpath(os.path.dirname(__file__))
+DATADIR = os.path.join(TEST_DIR, 'data')
+OUTPUTDIR = os.path.join(TEST_DIR, 'output')
 
 def test_formatted_warning():
     """Verify that a warning message is formatted correctly."""
@@ -293,7 +297,7 @@ def test_main():
                 'QoutRabsmax_file': "''",
                 'QoutRabsmin_file': "''",
                 'Qout_file': "''",
-                'Vlat_file': 'data/inflow_lis.nc',
+                'Vlat_file': 'tests/data/inflow_lis.nc',
                 'ZS_TauM': '86400',
                 'ZS_TauO': '0',
                 'ZS_TauR': '10800',
@@ -307,14 +311,14 @@ def test_main():
                 'babsmax_file': "''",
                 'dam_tot_id_file': "''",
                 'dam_use_id_file': "''",
-                'for_tot_id_file': 'data/for_tot_id.csv',
-                'for_use_id_file': 'data/for_use_id.csv',
+                'for_tot_id_file': 'tests/data/for_tot_id.csv',
+                'for_use_id_file': 'tests/data/for_use_id.csv',
                 'k_file': 'input/k.csv',
                 'kfac_file': "''",
                 'obs_tot_id_file': "''",
                 'obs_use_id_file': "''",
-                'rapid_connect_file': 'data/rapid_connect.csv',
-                'riv_bas_id_file': 'data/riv_bas_id.csv',
+                'rapid_connect_file': 'tests/data/rapid_connect.csv',
+                'riv_bas_id_file': 'tests/data/riv_bas_id.csv',
                 'x_file': 'input/x.csv',
                 'xfac_file': "''"}
 
