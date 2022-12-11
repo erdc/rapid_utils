@@ -5,9 +5,6 @@ import numpy as np
 import rapid_utils.rapid_namelist as rn
 import warnings
 
-# print(os.path.relpath(os.path.dirname(__file__)))
-# sys.exit(0)
-
 TEST_DIR = os.path.relpath(os.path.dirname(__file__))
 DATADIR = os.path.join(TEST_DIR, 'data')
 OUTPUTDIR = os.path.join(TEST_DIR, 'output')
@@ -165,8 +162,10 @@ def test_update_params():
     a = rn.RAPIDNamelist()
     a.update_params(new_params)
 
-    for k, v in new_params.items():
-        assert(a.params[k] == v)
+    for new_key, new_value in new_params.items():
+        key = new_key.lower()
+        value = a.params[key]['value']
+        assert(value == new_value)
 
 def test_parse_riv_bas_id_file():
     """Verify that parse_riv_bas_id_file returns a dictionary with the 
@@ -270,59 +269,62 @@ def test_main():
     parsed = b.read_namelist(output_filename)
     b.update_params(parsed, purge=True)
 
-    expected = {'BS_opt_Qfinal': '.FALSE.',
-                'BS_opt_Qinit': '.FALSE.',
-                'BS_opt_dam': '.FALSE.',
-                'BS_opt_for': '.FALSE.',
-                'BS_opt_influence': '.FALSE.',
-                'BS_opt_transpose_qout': '.FALSE.',
-                'IS_dam_tot': '0',
-                'IS_dam_use': '0',
-                'IS_for_tot': '4',
-                'IS_for_use': '3',
-                'IS_max_up': '2',
-                'IS_obs_tot': '0',
-                'IS_obs_use': '0',
-                'IS_opt_phi': '1',
-                'IS_opt_routing': '1',
-                'IS_opt_run': '1',
-                'IS_riv_bas': '50',
-                'IS_riv_tot': '50',
-                'IS_strt_opt': '0',
-                'Qfinal_file': "''",
-                'Qfor_file': "''",
-                'Qinit_file': "''",
-                'Qobs_file': "''",
-                'Qobsbarrec_file': "''",
-                'QoutRabsmax_file': "''",
-                'QoutRabsmin_file': "''",
-                'Qout_file': "''",
+    params = {param_dict['rapid_name']:param_dict['value'] for param_dict
+              in b.params.values()}
+
+    expected = {'BS_opt_Qfinal': False,
+                'BS_opt_Qinit': False,
+                'BS_opt_dam': False,
+                'BS_opt_for': False,
+                'BS_opt_influence': False,
+                'BS_opt_transpose_qout': False,
+                'IS_dam_tot': 0,
+                'IS_dam_use': 0,
+                'IS_for_tot': 4,
+                'IS_for_use': 3,
+                'IS_max_up': 2,
+                'IS_obs_tot': 0,
+                'IS_obs_use': 0,
+                'IS_opt_phi': 1,
+                'IS_opt_routing': 1,
+                'IS_opt_run': 1,
+                'IS_riv_bas': 50,
+                'IS_riv_tot': 50,
+                'IS_strt_opt': 0,
+                'Qfinal_file': None,
+                'Qfor_file': None,
+                'Qinit_file': None,
+                'Qobs_file': None,
+                'Qobsbarrec_file': None,
+                'QoutRabsmax_file': None,
+                'QoutRabsmin_file': None,
+                'Qout_file': None,
                 'Vlat_file': 'tests/data/inflow_lis.nc',
-                'ZS_TauM': '86400',
-                'ZS_TauO': '0',
-                'ZS_TauR': '10800',
-                'ZS_dtF': '0',
-                'ZS_dtM': '86400',
-                'ZS_dtO': '0',
-                'ZS_dtR': '900',
-                'ZS_knorm_init': '0',
-                'ZS_phifac': '0',
-                'ZS_xnorm_init': '0',
-                'babsmax_file': "''",
-                'dam_tot_id_file': "''",
-                'dam_use_id_file': "''",
+                'ZS_TauM': 86400,
+                'ZS_TauO': 0,
+                'ZS_TauR': 10800,
+                'ZS_dtF': 0,
+                'ZS_dtM': 86400,
+                'ZS_dtO': 0,
+                'ZS_dtR': 900,
+                'ZS_knorm_init': 0,
+                'ZS_phifac': 0,
+                'ZS_xnorm_init': 0,
+                'babsmax_file': None,
+                'dam_tot_id_file': None,
+                'dam_use_id_file': None,
                 'for_tot_id_file': 'tests/data/for_tot_id.csv',
                 'for_use_id_file': 'tests/data/for_use_id.csv',
                 'k_file': 'input/k.csv',
-                'kfac_file': "''",
-                'obs_tot_id_file': "''",
-                'obs_use_id_file': "''",
+                'kfac_file': None,
+                'obs_tot_id_file': None,
+                'obs_use_id_file': None,
                 'rapid_connect_file': 'tests/data/rapid_connect.csv',
                 'riv_bas_id_file': 'tests/data/riv_bas_id.csv',
                 'x_file': 'input/x.csv',
-                'xfac_file': "''"}
+                'xfac_file': None}
 
-    assert(b.params == expected)
+    assert(params == expected)
 
                                 
 

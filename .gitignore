@@ -1,0 +1,6 @@
+rapid_utils.egg-info/
+rapid_utils/__pycache__/
+*/.coverage
+*/__pycache__/
+tests/output/*
+*~

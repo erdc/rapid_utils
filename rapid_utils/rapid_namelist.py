@@ -76,6 +76,27 @@ def boolean_to_fortran_string(python_bool):
 
     return fortran_str
 
+def fortran_string_to_boolean(fortran_str):
+    """Map ".TRUE." to True and any other string to False.
+
+    Parameters
+    ----------
+    fortran_str : str
+        String representation of Fortran boolean variable.
+
+    Returns
+    -------
+    python_bool : bool
+        Python boolean variable.
+    """
+
+    if (fortran_str == '.TRUE.'):
+        python_bool = True
+    else:
+        python_bool = False
+
+    return python_bool
+
 class RAPIDNamelist:
 
     """Tools for reading, writing and updating a RAPID namelist file."""
@@ -117,62 +138,120 @@ class RAPIDNamelist:
         self.input_params = kwargs
 
         self.default_params = {
-            'BS_opt_Qfinal': False,
-            'BS_opt_Qinit': False,
-            'BS_opt_dam': False,
-            'BS_opt_for': False,
-            'BS_opt_influence': False,
-            'BS_opt_transpose_qout': False,
-            'IS_dam_tot': 0,
-            'IS_dam_use': 0,
-            'IS_for_tot': 0,
-            'IS_for_use': 0,
-            'IS_max_up': 2,
-            'IS_obs_tot': 0,
-            'IS_obs_use': 0,
-            'IS_opt_phi': 1,
-            'IS_opt_routing': 1,
-            'IS_opt_run': 1,
-            'IS_riv_bas': 0,
-            'IS_riv_tot': 0,
-            'IS_strt_opt': 0,
-            'Qfinal_file': None,
-            'Qfor_file': None,
-            'Qinit_file': None,
-            'Qobs_file': None,
-            'Qobsbarrec_file': None,
-            'QoutRabsmax_file': None,
-            'QoutRabsmin_file': None,
-            'Qout_file': None,
-            'Vlat_file': None,
-            'ZS_TauM': 0,
-            'ZS_TauO': 0,
-            'ZS_TauR': 0,
-            'ZS_dtF': 0,
-            'ZS_dtM': 86400,
-            'ZS_dtO': 0,
-            'ZS_dtR': 900,
-            'ZS_knorm_init': 0,
-            'ZS_phifac': 0,
-            'ZS_xnorm_init': 0,
-            'babsmax_file': None,
-            'dam_tot_id_file': None,
-            'dam_use_id_file': None,
-            'for_tot_id_file': None,
-            'for_use_id_file': None,
-            'k_file': 'input/k.csv',
-            'kfac_file': None,
-            'obs_tot_id_file': None,
-            'obs_use_id_file': None,
-            'rapid_connect_file': 'input/rapid_connect.csv',
-            'riv_bas_id_file': 'input/riv_bas_id.csv',
-            'x_file': 'input/x.csv',
-            'xfac_file': None,}
+            'bs_opt_qfinal':
+                {'rapid_name': 'BS_opt_Qfinal', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'bs_opt_qinit':
+                {'rapid_name': 'BS_opt_Qinit', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'bs_opt_dam':
+                {'rapid_name': 'BS_opt_dam', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'bs_opt_for':
+                {'rapid_name': 'BS_opt_for', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'bs_opt_influence':
+                {'rapid_name': 'BS_opt_influence', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'bs_opt_transpose_qout':
+                {'rapid_name': 'BS_opt_transpose_qout', 'value': False,
+                 'cast':  fortran_string_to_boolean},
+            'is_dam_tot':
+                {'rapid_name': 'IS_dam_tot', 'value': 0, 'cast':  int},
+            'is_dam_use':
+                {'rapid_name': 'IS_dam_use', 'value': 0, 'cast':  int},
+            'is_for_tot':
+                {'rapid_name': 'IS_for_tot', 'value': 0, 'cast':  int},
+            'is_for_use':
+                {'rapid_name': 'IS_for_use', 'value': 0, 'cast':  int},
+            'is_max_up':
+                {'rapid_name': 'IS_max_up', 'value': 2, 'cast':  int},
+            'is_obs_tot':
+                {'rapid_name': 'IS_obs_tot', 'value': 0, 'cast':  int},
+            'is_obs_use':
+                {'rapid_name': 'IS_obs_use', 'value': 0, 'cast':  int},
+            'is_opt_phi':
+                {'rapid_name': 'IS_opt_phi', 'value': 1, 'cast':  int},
+            'is_opt_routing':
+                {'rapid_name': 'IS_opt_routing', 'value': 1, 'cast':  int},
+            'is_opt_run':
+                {'rapid_name': 'IS_opt_run', 'value': 1, 'cast':  int},
+            'is_riv_bas':
+                {'rapid_name': 'IS_riv_bas', 'value': 0, 'cast':  int},
+            'is_riv_tot':
+                {'rapid_name': 'IS_riv_tot', 'value': 0, 'cast':  int},
+            'is_strt_opt':
+                {'rapid_name': 'IS_strt_opt', 'value': 0, 'cast':  int},
+            'qfinal_file':
+                {'rapid_name': 'Qfinal_file', 'value': None, 'cast':  str},
+            'qfor_file':
+                {'rapid_name': 'Qfor_file', 'value': None, 'cast':  str},
+            'qinit_file':
+                {'rapid_name': 'Qinit_file', 'value': None, 'cast':  str},
+            'qobs_file':
+                {'rapid_name': 'Qobs_file', 'value': None, 'cast':  str},
+            'qobsbarrec_file':
+                {'rapid_name': 'Qobsbarrec_file', 'value': None, 'cast':  str},
+            'qoutrabsmax_file':
+                {'rapid_name': 'QoutRabsmax_file', 'value': None, 'cast':  str},
+            'qoutrabsmin_file':
+                {'rapid_name': 'QoutRabsmin_file', 'value': None, 'cast':  str},
+            'qout_file':
+                {'rapid_name': 'Qout_file', 'value': None, 'cast':  str},
+            'vlat_file':
+                {'rapid_name': 'Vlat_file', 'value': None, 'cast':  str},
+            'zs_taum':
+                {'rapid_name': 'ZS_TauM', 'value': 0, 'cast':  int},
+            'zs_tauo':
+                {'rapid_name': 'ZS_TauO', 'value': 0, 'cast':  int},
+            'zs_taur':
+                {'rapid_name': 'ZS_TauR', 'value': 0, 'cast':  int},
+            'zs_dtf':
+                {'rapid_name': 'ZS_dtF', 'value': 0, 'cast':  int},
+            'zs_dtm':
+                {'rapid_name': 'ZS_dtM', 'value': 86400, 'cast':  int},
+            'zs_dto':
+                {'rapid_name': 'ZS_dtO', 'value': 0, 'cast':  int},
+            'zs_dtr':
+                {'rapid_name': 'ZS_dtR', 'value': 900, 'cast':  int},
+            'zs_knorm_init':
+                {'rapid_name': 'ZS_knorm_init', 'value': 0, 'cast':  int},
+            'zs_phifac':
+                {'rapid_name': 'ZS_phifac', 'value': 0, 'cast':  int},
+            'zs_xnorm_init':
+                {'rapid_name': 'ZS_xnorm_init', 'value': 0, 'cast':  int},
+            'babsmax_file':
+                {'rapid_name': 'ZS_xnorm_init', 'value': 0, 'cast':  int},
+            'babsmax_file':
+                {'rapid_name': 'babsmax_file', 'value': None, 'cast':  str},
+            'dam_tot_id_file':
+                {'rapid_name': 'dam_tot_id_file', 'value': None, 'cast':  str},
+            'dam_use_id_file':
+                {'rapid_name': 'dam_use_id_file', 'value': None, 'cast':  str},
+            'for_tot_id_file':
+                {'rapid_name': 'for_tot_id_file', 'value': None, 'cast':  str},
+            'for_use_id_file':
+                {'rapid_name': 'for_use_id_file', 'value': None, 'cast':  str},
+            'k_file':
+                {'rapid_name': 'k_file', 'value': 'input/k.csv', 'cast':  str},
+            'kfac_file':
+                {'rapid_name': 'kfac_file', 'value': None, 'cast':  str},
+            'obs_tot_id_file':
+                {'rapid_name': 'obs_tot_id_file', 'value': None, 'cast':  str},
+            'obs_use_id_file':
+                {'rapid_name': 'obs_use_id_file', 'value': None, 'cast':  str},
+            'rapid_connect_file':
+                {'rapid_name': 'rapid_connect_file',
+                 'value': 'input/rapid_connect.csv', 'cast':  str},
+            'riv_bas_id_file':
+                {'rapid_name': 'riv_bas_id_file',
+                 'value': 'input/riv_bas_id.csv', 'cast':  str},
+            'x_file':
+                {'rapid_name': 'x_file', 'value': 'input/x.csv', 'cast':  str},
+            'xfac_file':
+                {'rapid_name': 'xfac_file', 'value': None, 'cast':  str}}
 
         self.params = self.default_params.copy()
-
-        self.rapid_str_format_dict = {
-            k.lower(): k for k in self.default_params.keys()}
 
         self.update_params(self.input_params)
 
@@ -221,28 +300,30 @@ class RAPIDNamelist:
 
         return parsed
 
-    def write_namelist(self, filename=None, header='&NL_namelist'):
+    def write_namelist(self, filename=None, header='&NL_namelist',
+                       end_char='/'):
         """Write `params` key, value pairs to file."""
 
         if filename is not None:
             self.output_filename = filename
 
-        end_char = '/'
-
         with open(self.output_filename, 'w', encoding='utf8') as f:
             f.write(f'{header}\n')
-            for key, value in self.params.items():
-                if isinstance(value, bool):
-                    value = boolean_to_fortran_string(value)
-                elif value is None:
-                    value = "''"
-                if key not in self.default_params.keys():
-                    warnings.warn(
-                        f'Key {key} not recognized.\n' +
-                        f'Writing {key} = {value} ' +
-                        'to the namelist.')
+            for key, item in self.params.items():
+                name = item['rapid_name']
+                value = item['value']
 
-                f.write(f'{key} = {value}\n')
+                if (key not in self.default_params.keys()):
+                    warnings.warn(
+                        f'Key {name} not recognized.\n' +
+                        f'Writing {name} = {value} to the namelist.')
+                    
+                if item['value'] is None:
+                    value = "''"
+                elif isinstance(value, bool):
+                    value = boolean_to_fortran_string(value)
+
+                f.write(f'{name} = {value}\n')
 
             f.write(end_char)
 
@@ -261,12 +342,22 @@ class RAPIDNamelist:
             self.params = {}
 
         for input_key, input_value in new_param_dict.items():
-            lkey = input_key.lower()
-            if lkey in self.rapid_str_format_dict.keys():
-                rapid_key = self.rapid_str_format_dict[lkey]
-                self.params[rapid_key] = input_value
+            key = input_key.lower()
+            if key in self.default_params.keys():
+                self.params[key] = self.default_params[key].copy()
             else:
-                self.params[input_key] = input_value
+                self.params[key] = {}
+                self.params[key]['rapid_name'] = input_key
+                self.params[key]['cast'] = str
+
+            cast = self.params[key]['cast']
+
+            if input_value in ["''", '']:
+                value = None
+            else:
+                value = cast(input_value)
+
+            self.params[key]['value'] = value
 
     def parse_riv_bas_id_file(self):
         """Read a "riv_bas_id" file to determine the value for the
@@ -278,7 +369,7 @@ class RAPIDNamelist:
             Dictionary with `IS_riv_bas` parameter.
         """
         ftype = 'riv_bas_id'
-        filename = self.params['riv_bas_id_file']
+        filename = self.params['riv_bas_id_file']['value']
 
         riv_bas_id_table = read_table_from_file(
             filename, ftype, delimiter=',', usecols=0, dtype=int)
@@ -302,7 +393,7 @@ class RAPIDNamelist:
             Dictionary with `IS_riv_tot` and `IS_max_upstream` parameters.
         """
         ftype = 'rapid_connect'
-        filename = self.params['rapid_connect_file']
+        filename = self.params['rapid_connect_file']['value']
 
         rapid_connect_table = read_table_from_file(
             filename, ftype, delimiter=',', dtype=int)
@@ -329,7 +420,7 @@ class RAPIDNamelist:
             Dictionary with `IS_for_tot` parameter.
         """
         ftype = 'for_tot_id'
-        filename = self.params['for_tot_id_file']
+        filename = self.params['for_tot_id_file']['value']
 
         for_tot_table = read_table_from_file(
             filename, ftype, delimiter=',', usecols=0, dtype=int)
@@ -353,7 +444,7 @@ class RAPIDNamelist:
             Dictionary with `IS_for_tot` parameter.
         """
         ftype = 'for_use_id'
-        filename = self.params['for_use_id_file']
+        filename = self.params['for_use_id_file']['value']
 
         for_use_table = read_table_from_file(
             filename, ftype, delimiter=',', usecols=0, dtype=int)
@@ -382,7 +473,7 @@ class RAPIDNamelist:
             is found, the length of the time dimension of the runoff variable.
         """
         ftype = 'vlat'
-        filename = self.params['Vlat_file']
+        filename = self.params['vlat_file']['value']
         runoff_dataset = None
         time_var = None
         runoff_var = None
