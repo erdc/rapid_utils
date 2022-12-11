@@ -90,10 +90,7 @@ def fortran_string_to_boolean(fortran_str):
         Python boolean variable.
     """
 
-    if (fortran_str == '.TRUE.'):
-        python_bool = True
-    else:
-        python_bool = False
+    python_bool = (fortran_str == '.TRUE.')
 
     return python_bool
 
@@ -221,8 +218,6 @@ class RAPIDNamelist:
             'zs_xnorm_init':
                 {'rapid_name': 'ZS_xnorm_init', 'value': 0, 'cast':  int},
             'babsmax_file':
-                {'rapid_name': 'ZS_xnorm_init', 'value': 0, 'cast':  int},
-            'babsmax_file':
                 {'rapid_name': 'babsmax_file', 'value': None, 'cast':  str},
             'dam_tot_id_file':
                 {'rapid_name': 'dam_tot_id_file', 'value': None, 'cast':  str},
@@ -313,11 +308,11 @@ class RAPIDNamelist:
                 name = item['rapid_name']
                 value = item['value']
 
-                if (key not in self.default_params.keys()):
+                if key not in self.default_params.keys():
                     warnings.warn(
                         f'Key {name} not recognized.\n' +
                         f'Writing {name} = {value} to the namelist.')
-                    
+
                 if item['value'] is None:
                     value = "''"
                 elif isinstance(value, bool):
@@ -478,7 +473,6 @@ class RAPIDNamelist:
         time_var = None
         runoff_var = None
 
-        print(f'***{filename}***')
         if filename is None:
             warnings.warn(f'No {ftype} file specified.')
         else:
@@ -527,7 +521,7 @@ class RAPIDNamelist:
         parsed = {'ZS_TauM': self.total_simulation_time_s,
                   'ZS_TauR': self.simulation_time_step_s}
 
-        return parsed        
+        return parsed
 
     def main(self):
         """Update parameters from RAPID input files and write namelist."""
@@ -553,7 +547,7 @@ class RAPIDNamelist:
         # User specified parameters will overwrite any parameters parsed from
         # file.
         self.update_params(self.input_params)
-        
+
         self.write_namelist()
 
 if __name__ == '__main__':

@@ -1,9 +1,8 @@
 """Test module for rapid_utils/rapid_namelist.py."""
 
 import os
-import numpy as np
 import rapid_utils.rapid_namelist as rn
-import warnings
+
 
 TEST_DIR = os.path.relpath(os.path.dirname(__file__))
 DATADIR = os.path.join(TEST_DIR, 'data')
@@ -22,11 +21,11 @@ def test_formatted_warning():
                                file=f, line=line)
 
     expected = 'filename:lineno: UserWarning: message\n'
-    
-    assert(out == expected)
+
+    assert out == expected
 
 def test_read_namelist():
-    """Verify that read_namelist correctly parses parameters from an 
+    """Verify that read_namelist correctly parses parameters from an
     existing namelist file.
     """
     input_namelist_file = os.path.join(DATADIR, 'rapid_namelist')
@@ -87,10 +86,10 @@ def test_read_namelist():
                 'x_file': 'input/x.csv',
                 'xfac_file': "''"}
 
-    assert(parsed == expected)
-    
+    assert parsed == expected
+
 def test_write_default_namelist():
-    """Verify that RAPIDNamelist can write a namelist with the correct 
+    """Verify that RAPIDNamelist can write a namelist with the correct
     default parameters.
     """
     a = rn.RAPIDNamelist()
@@ -151,11 +150,11 @@ def test_write_default_namelist():
                 'x_file': 'input/x.csv',
                 'xfac_file': "''"}
 
-    assert(parsed == expected)
+    assert parsed == expected
 
 def test_update_params():
-    """Verify that update_params correctly updates the 
-    `params` attribute from a specified dictionary.
+    """Verify that update_params correctly updates the `params` attribute
+    from a specified dictionary.
     """
     new_params = {'ZS_TauM': 172800, 'ZS_TauR': 10800}
 
@@ -165,10 +164,10 @@ def test_update_params():
     for new_key, new_value in new_params.items():
         key = new_key.lower()
         value = a.params[key]['value']
-        assert(value == new_value)
+        assert value == new_value
 
 def test_parse_riv_bas_id_file():
-    """Verify that parse_riv_bas_id_file returns a dictionary with the 
+    """Verify that parse_riv_bas_id_file returns a dictionary with the
     correct value for `IS_riv_bas`.
     """
     filename = os.path.join(DATADIR, 'riv_bas_id.csv')
@@ -180,10 +179,10 @@ def test_parse_riv_bas_id_file():
 
     expected = {'IS_riv_bas': 50}
 
-    assert(parsed == expected)
+    assert parsed == expected
 
 def test_parse_connectivity_file():
-    """Verify that parse_connectivity_file returns a dictionary with the 
+    """Verify that parse_connectivity_file returns a dictionary with the
     correct values for `IS_riv_tot` and `IS_max_up`.
     """
     filename = os.path.join(DATADIR, 'rapid_connect.csv')
@@ -195,11 +194,11 @@ def test_parse_connectivity_file():
 
     expected = {'IS_riv_tot': 50,
                 'IS_max_up': 2}
-    
-    assert(parsed == expected)
+
+    assert parsed == expected
 
 def test_parse_forcing_tot_file():
-    """Verify that parse_forcing_tot_file returns a dictionary with the 
+    """Verify that parse_forcing_tot_file returns a dictionary with the
     correct value for `IS_for_tot`.
     """
     filename = os.path.join(DATADIR, 'for_tot_id.csv')
@@ -210,11 +209,11 @@ def test_parse_forcing_tot_file():
     parsed = a.parse_forcing_tot_file()
 
     expected = {'IS_for_tot': 4}
-    
-    assert(parsed == expected)
+
+    assert parsed == expected
 
 def test_parse_forcing_use_file():
-    """Verify that parse_forcing_use_file returns a dictionary with the 
+    """Verify that parse_forcing_use_file returns a dictionary with the
     correct value for `IS_for_use`.
     """
     filename = os.path.join(DATADIR, 'for_use_id.csv')
@@ -225,11 +224,11 @@ def test_parse_forcing_use_file():
     parsed = a.parse_forcing_use_file()
 
     expected = {'IS_for_use': 3}
-    
-    assert(parsed == expected)
-    
+
+    assert parsed == expected
+
 def test_parse_vlat_file():
-    """Verify that parse_vlat_file returns the correct values for 
+    """Verify that parse_vlat_file returns the correct values for
     `ZS_TauM` and `ZS_TauR`.
     """
     filename = os.path.join(DATADIR, 'inflow_lis.nc')
@@ -242,11 +241,11 @@ def test_parse_vlat_file():
 
     expected = {'ZS_TauM': 86400,
                 'ZS_TauR': 10800}
-    
-    assert(parsed == expected)
+
+    assert parsed == expected
 
 def test_main():
-    """Verify that the main method of RAPIDNamelist writes a valid 
+    """Verify that the main method of RAPIDNamelist writes a valid
     namelist file using default parameters and parameters parsed from
     specified input files.
     """
@@ -324,11 +323,4 @@ def test_main():
                 'x_file': 'input/x.csv',
                 'xfac_file': None}
 
-    assert(params == expected)
-
-                                
-
-        
-                       
-                       
-    
+    assert params == expected
