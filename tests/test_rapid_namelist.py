@@ -80,10 +80,9 @@ def test_read_namelist():
                 'kfac_file': "''",
                 'obs_tot_id_file': "''",
                 'obs_use_id_file': "''",
-                'rapid_connect_file':
-                'input/rapid_connect.csv',
-                'riv_bas_id_file': 'input/riv_bas_id.csv',
-                'x_file': 'input/x.csv',
+                'rapid_connect_file': "'input/rapid_connect.csv'",
+                'riv_bas_id_file': "'input/riv_bas_id.csv'",
+                'x_file': "'input/x.csv'",
                 'xfac_file': "''"}
 
     assert parsed == expected
@@ -141,13 +140,13 @@ def test_write_default_namelist():
                 'dam_use_id_file': "''",
                 'for_tot_id_file': "''",
                 'for_use_id_file': "''",
-                'k_file': 'input/k.csv',
+                'k_file': "'input/k.csv'",
                 'kfac_file': "''",
                 'obs_tot_id_file': "''",
                 'obs_use_id_file': "''",
-                'rapid_connect_file': 'input/rapid_connect.csv',
-                'riv_bas_id_file': 'input/riv_bas_id.csv',
-                'x_file': 'input/x.csv',
+                'rapid_connect_file': "'input/rapid_connect.csv'",
+                'riv_bas_id_file': "'input/riv_bas_id.csv'",
+                'x_file': "'input/x.csv'",
                 'xfac_file': "''"}
 
     assert parsed == expected

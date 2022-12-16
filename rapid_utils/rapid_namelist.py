@@ -128,7 +128,7 @@ class RAPIDNamelist:
             "time" variable.
         """
         self.output_filename = output_filename
-        self.simulation_time_step_s = simulation_time_step_s
+        self.simulation_time_step_s = simulation_time_step_s or 0
         self.runoff_variable_name = runoff_variable_name
         self.runoff_time_axis = runoff_time_axis
         self.input_filename = input_filename
@@ -307,6 +307,7 @@ class RAPIDNamelist:
             for key, item in self.params.items():
                 name = item['rapid_name']
                 value = item['value']
+                cast = item['cast']
 
                 if key not in self.default_params.keys():
                     warnings.warn(
@@ -315,6 +316,8 @@ class RAPIDNamelist:
 
                 if item['value'] is None:
                     value = "''"
+                elif cast == str:
+                    value = f"'{value}'"
                 elif isinstance(value, bool):
                     value = boolean_to_fortran_string(value)
 
@@ -351,6 +354,10 @@ class RAPIDNamelist:
                 value = None
             else:
                 value = cast(input_value)
+
+            if isinstance(value, str):
+                value = value.strip("'")
+                value = value.strip('"')
 
             self.params[key]['value'] = value
 
@@ -476,7 +483,10 @@ class RAPIDNamelist:
         if filename is None:
             warnings.warn(f'No {ftype} file specified.')
         else:
-            runoff_dataset = Dataset(filename)
+            try:
+                runoff_dataset = Dataset(filename)
+            except (IOError, FileNotFoundError):
+                warnings.warn(f'Unable to read {fytpe} file {filename}.')
 
         if runoff_dataset is not None:
             try:
@@ -509,13 +519,12 @@ class RAPIDNamelist:
         elif runoff_var is not None:
             self.n_time_steps = runoff_var.shape[self.runoff_time_axis]
         else:
-            self.n_time_steps = None
+            self.n_time_steps = 0
 
-        if (self.n_time_steps is not None) and (
-                self.simulation_time_step_s is not None):
-            self.total_simulation_time_s = (
-                self.n_time_steps * self.simulation_time_step_s)
-        else:
+        self.total_simulation_time_s = (
+            self.n_time_steps * self.simulation_time_step_s)
+        
+        if self.total_simulation_time_s <= 0:
             warnings.warn('Unable to determine length of simulation time.')
 
         parsed = {'ZS_TauM': self.total_simulation_time_s,
