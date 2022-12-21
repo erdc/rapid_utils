@@ -12,10 +12,18 @@ class RAPIDInputDischarge:
 
     def __init__(self,
                  output_filename='rapid_input_discharge.nc',
+                 input_file_list=[],
                  discharge=None,
                  time=None,
                  rivid=None,
-                 latitude=None, longitude=None,
+                 latitude=None,
+                 longitude=None,
+                 input_discharge=None,
+                 input_discharge_file=None,
+                 input_discharge_rivid=None,
+                 rivid_file=None,
+                 input_discharge_time_axis=0,
+                 input_discharge_time_index=-1,
                  discharge_datatype='f8', rivid_datatype='i4',
                  time_datatype='i8', latlon_datatype='f8',
                  crs_datatype='i4',
@@ -24,7 +32,8 @@ class RAPIDInputDischarge:
                  time_variable_name='time',
                  rivid_variable_name='rivid',
                  latitude_variable_name='lat',
-                 longitude_variable_name='longitude'):
+                 longitude_variable_name='longitude',
+                 integration_type='mean'):
         """
         Parameters
         ----------
@@ -40,6 +49,10 @@ class RAPIDInputDischarge:
             Latitude coordinates.
         longitude : array_like
             Longitude coordinates.
+        input_discharge_file=None,
+        rivid_file=None, 
+        input_discharge_time_axis=0,
+        input_discharge_time_index=-1,
         discharge_datatype : str
             Data type to be used for writing discharge variable.
         rivid_datatype : str
@@ -69,6 +82,12 @@ class RAPIDInputDischarge:
         self.rivid = rivid
         self.latitude = latitude
         self.longitude = longitude
+        self.input_discharge = input_discharge
+        self.input_discharge_rivid = input_discharge_rivid
+        self.input_discharge_file = input_discharge_file
+        self.rivid_file = rivid_file
+        self.input_discharge_time_axis = input_discharge_time_axis
+        self.input_discharge_time_index = input_discharge_time_index
         self.discharge_datatype = discharge_datatype
         self.rivid_datatype = rivid_datatype
         self.time_datatype = time_datatype
@@ -80,6 +99,15 @@ class RAPIDInputDischarge:
         self.rivid_variable_name = rivid_variable_name
         self.latitude_variable_name = latitude_variable_name
         self.longitude_variable_name = longitude_variable_name
+
+        if self.input_discharge_time_axis == 0:
+            self.input_discharge_slice = (
+                slice(self.input_discharge_time_index,None, None),
+                slice(None, None, None))
+        elif self.input_discharge_time_axis == 1:
+            self.input_discharge_slice = (
+                slice(None, None, None),
+                slice(self.input_discharge_time_index, None, None))
 
     def write_nc(self, discharge=None, time=None, rivid=None, latitude=None,
                  longitude=None):
@@ -185,74 +213,29 @@ class RAPIDInputDischarge:
         # close file
         data_out_nc.close()
 
-class InitialFlows(RAPIDInputDischarge):
-
-    def __init__(self,
-                 output_filename='qinit.nc'
-                 input_discharge_file=None,
-                 connectivity_file=None, 
-                 input_discharge_time_axis=0,
-                 input_discharge_time_index=-1,
-                 discharge_datatype='f8',
-                 rivid_datatype='i4',
-                 time_datatype='i8',
-                 latlon_datatype='f8',
-                 crs_datatype='i4',
-                 time_units='seconds since 1970-01-01 00:00:00',
-                 discharge_variable_name='Qout',
-                 rivid_variable_name='rivid',
-                 latitude_variable_name='lat',
-                 longitude_variable_name='lon',
-                 time_variable_name='time'):
-
-        self.input_discharge_file = input_discharge_file
-        self.connectivity_file = connectivity_file
-        self.input_discharge_time_axis = input_discharge_time_axis
-        self.input_discharge_time_index = input_discharge_time_index
-
-        # Attributes to be assigned.
-        self.input_discharge = None
-        self.connectivity = None
-        self.input_discharge_rivid = None
-        
-        super().__init__(output_filename=output_filename,
-                         discharge_datatype=discharge_datatype,
-                         rivid_datatype=rivid_datatype,
-                         time_datatype=time_datatype,
-                         latlon_datatype=latlon_datatype
-                         crs_datatype=crs_datatype)
-
-    def parse_input_discharge_file(self, input_discharge_file=None):
+    def parse_input_discharge_file(self, input_discharge_file=None,
+                                   discharge_only=False):
 
         if input_discharge_file is not None:
             self.input_discharge_file = input_discharge_file
 
-        if self.input_discharge_time_axis == 0:
-            input_discharge_slice = (
-                slice(self.input_discharge_time_index,None, None),
-                slice(None, None, None))
-        elif self.input_discharge_time_axis == 1:
-            input_discharge_slice = (
-                slice(None, None, None),
-                slice(self.input_discharge_time_index, None, None))
-
-        input_time_var = None
-        
         try:
             d = Dataset(self.input_discharge_file)
         except IOError:
             warnings.warn(
                 f'Unable to open file {self.input_discharge_file}.')
             d = None
-        
+
         if d is not None:
             try:
                 self.input_discharge = d[self.discharge_variable_name][
-                    input_discharge_slice]
+                    self.input_discharge_slice]
             except (IOError, IndexError):
                 warnings.warn(
                     f'Variable "{self.discharge_variable_name}" not found ' +
                     f'in file {self.input_discharge_file}.')
+
+        if not discharge_only:
 
             try:
                 self.input_discharge_rivid = d['rivid'][:]
@@ -268,60 +251,124 @@ class InitialFlows(RAPIDInputDischarge):
                     f'Variable "time" not found ' +
                     f'in file {self.input_discharge_file}.')
                 
-        if time_var is not None:
-            try:
-                time_step = time_var[1] - time_var[0]
-            except IndexError:
-                time_step = None
+            if time_var is not None:
+                try:
+                    time_step = time_var[1] - time_var[0]
+                except IndexError:
+                    time_step = None
 
-            # Increment final simulation time t_n by time step to give value
-            # t_(n+1). t_(n+1) is assumed to be the first time step when
-            # initializing a new run with discharge from t_n.
-            final_time = time_var[-1]
+                # Increment final simulation time t_n by time step to give
+                # value t_(n+1). t_(n+1) is assumed to be the first time step
+                # when initializing a new run with discharge from t_n.
+                final_time = time_var[-1]
 
-            try:
-                next_time = final_time + time_step
-            except:
-                next_time = np.array([])
+                try:
+                    next_time = final_time + time_step
+                except:
+                    next_time = np.array([])
 
-            self.time = next_time
+                self.time = next_time
 
-        if self.time is None:
-            self.time = np.array([])
+            if self.time is None:
+                self.time = np.array([])
 
-    def parse_connectivity_file(self, connectivity_file=None, delimiter=','):
+    def parse_rivid_file(self, rivid_file=None, delimiter=',', usecols=0):
 
-        if connectivity_file is not None:
-            self.connectivity_file = connectivity_file
+        if rivid_file is not None:
+            self.rivid_file = rivid_file
 
         try:
-            self.connectivity = np.genfromtxt(
-                self.connectivity_file, delimiter=delimiter, dtype=int)
+            self.rivid = np.genfromtxt(
+                self.rivid_file, delimiter=delimiter, dtype=int,
+                usecols=usecols)
         except:
-            warnings.warn(f'Unable to read file {self.connectivity_file}.')
-            self.connectivity = None
-
-        if self.connectivity is not None:
-            self.rivid = self.connectivity[:,0]
+            warnings.warn(f'Unable to read file {self.rivid_file}.')
+            self.rivid = None
 
     def sort_discharge_by_rivid(self, input_discharge_file=None,
-                                connectivity_file=None):
+                                rivid_file=None):
 
         if input_discharge_file is not None:
-            self.input_discharge_file = input_discharge_file
-        if connectivity_file is not None:
-            self.connectivity_file = connectivity_file
+            self.parse_input_discharge_file(
+                input_discharge_file=input_discharge_file)
+        if rivid_file is not None:
+            self.parse_rivid_file(rivid_file=rivid_file)
 
-        if self.input_discharge is None:
-            self.parse_input_discharge_file()
+        if self.rivid is None:
+            warnings.warn('No rivid array specified.')
+            has_input = False
+        elif self.input_discharge_rivid is None:
+            warnings.warn('No input discharge rivid array specified.')
+            has_input = False
+        elif self.input_discharge is None:
+            warnings.warn('No input discharge specified.')
+            has_input = False
 
-        if self.connectivity is None:
-            self.parse_connectivity_file()
-        
-        if np.array_equal(self.rivid, self.input_discharge_rivid):
-            d = Dataset(self.output_filename, 'a')
-            d[self.discharge_variable_name][:] = self.input_discharge
-            d[self.time_variable_name][:] = self.time
+        is_sorted = np.array_equal(self.rivid, self.input_discharge_rivid)
+
+        if has_input and not is_sorted:
+            sorted_rivid_indices = np.argsort(self.rivid)
+            unsort_rivid_indices = np.argsort(sorted_rivid_indices)
+            sorted_rivid = self.rivid[sorted_rivid_indices]
+            
+            sorted_input_rivid_indices = np.argsort(
+                self.input_discharge_rivid)
+            sorted_input_rivid = self.input_discharge_rivid[
+                sorted_input_rivid_indices]
+            sorted_input_discharge = self.input_discharge[
+                sorted_input_rivid_indices]
+
+            extract_indices = np.isin(sorted_input_rivid, sorted_rivid)
+            extracted_discharge = sorted_input_discharge[extract_indices]
+            extracted_discharge = extracted_discharge[unsort_rivid_indices]
+
+        self.discharge = extracted_discharge
+
+    def calculate_mean_input_discharge(self):
+        nfile = len(self.input_file_list)
+            
+        self.parse_input_discharge_file(
+        input_discharge_file=self.input_file_list[0])
+
+        input_discharge = self.input_discharge
+
+        for f in self.input_file_list[1:]:
+            self.parse_input_discharge_file(input_discharge_file=f,
+                                            discharge_only=True)
+            input_discharge += self.input_discharge
+
+        self.input_discharge = input_discharge / nfile
+
+    def integrate_over_files(self):
+        if self.integration_type.lower() == 'mean':
+            self.calculate_mean_input_discharge()
+        else:
+            warnings.warn(f'Integration type {self.integration_type} not ' +
+                          'recognized.')
+
+    def main(self):
+
+        if self.input_discharge_file_list is not None:
+            self.integrate_over_files()
+
+        self.sort_discharge_by_rivid()
+
+        self.write_nc()
 
 if __name__ == '__main__':
+    input_rivid = np.array([43, 63, 36, 47, 91])
+    rivid = np.array([36, 63])
+    input_discharge = np.array([200, 100, 400, 300, 600])
+    a = RAPIDInputDischarge(input_discharge_rivid=input_rivid, rivid=rivid,
+                            input_discharge=input_discharge)
+
+    print(a.input_discharge_rivid)
+    print(a.input_discharge)
+    print(a.rivid)
+
+    a.sort_discharge_by_rivid()
+
+    print(a.rivid)
+    print(a.discharge)
+    
    
