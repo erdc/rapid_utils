@@ -10,6 +10,9 @@ DATADIR = os.path.join(TEST_DIR, 'data')
 OUTPUTDIR = os.path.join(TEST_DIR, 'output')
 
 def test_write_nc():
+    """Verify that rapid_input_discharge.test_write_nc writes a netCDF file
+    with the expected variables.
+    """
     output_filename = os.path.join(
         OUTPUTDIR, 'rapid_input_discharge_test_write.nc')
 
@@ -24,6 +27,9 @@ def test_write_nc():
     assert set(keys) == set(expected)
 
 def test_parse_input_discharge_file():
+    """Verify that rapid_input_discharge.parse_input_discharge correctly
+    extracts values from a netCDF file.
+    """
     input_discharge_file = os.path.join(DATADIR, 'qout.nc')
 
     a = RAPIDInputDischarge(input_discharge_file=input_discharge_file)
@@ -41,6 +47,9 @@ def test_parse_input_discharge_file():
     assert np.array_equal(rivid, expected_rivid)
 
 def test_parse_rivid_file():
+    """Verify that rapid_input_discharge.parse_rivid_file correctly extracts
+    values from a text file.
+    """
     rivid_file = os.path.join(DATADIR, 'rapid_connect.csv')
     a = RAPIDInputDischarge(rivid_file=rivid_file)
     a.parse_rivid_file()
@@ -51,10 +60,13 @@ def test_parse_rivid_file():
     assert np.array_equal(rivid, expected_rivid)
 
 def test_sort_discharge_by_rivid():
+    """Verify that rapid_input_discharge.sort_discharge_by_rivid correctly
+    filters and orders values according to a specified list of identifiers.
+    """
     input_discharge_file = os.path.join(DATADIR, 'qout.nc')
 
     rivid = [70625, 70652]
-    
+
     a = RAPIDInputDischarge(input_discharge_file=input_discharge_file,
                             rivid=rivid)
     a.parse_input_discharge_file()
@@ -66,6 +78,9 @@ def test_sort_discharge_by_rivid():
     np.testing.assert_allclose(discharge, expected, atol=1e-8, rtol=0)
 
 def test_integrate_over_files_mean():
+    """Verify that rapid_input_discharge.test_integrate_over_files_mean
+    correctly computes the mean of arrays extracted from a list of netCDF files.
+    """
     input_file_list = [os.path.join(DATADIR, 'qout_1.nc'),
                        os.path.join(DATADIR, 'qout_2.nc')]
 
@@ -77,6 +92,9 @@ def test_integrate_over_files_mean():
     np.testing.assert_allclose(input_discharge, expected, atol=1e-8, rtol=0)
 
 def test_main():
+    """Verify that the rapid_input_discharge.main correctly extracts, filters,
+    and orders values from a netCDF file according to a list of identifiers.
+    """
     rivid = [70625, 70652]
     input_discharge_file = os.path.join(DATADIR, 'qout.nc')
 
@@ -90,13 +108,4 @@ def test_main():
     discharge = a.discharge
     expected = [0.91938674,  0.5366134]
 
-    np.testing.assert_allclose(discharge, expected, atol=1e-8, rtol=0)
-
-if __name__ == '__main__':
-    # test_write_nc()
-    # test_parse_input_discharge_file()
-    # test_parse_rivid_file()
-    # test_sort_discharge_by_rivid()
-    # test_integrate_over_files_mean()
-    test_main()
-    
+    np.testing.assert_allclose(discharge, expected, atol=1e-8, rtol=0)    
