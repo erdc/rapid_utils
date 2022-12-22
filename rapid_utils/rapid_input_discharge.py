@@ -7,8 +7,9 @@ import warnings
 
 class RAPIDInputDischarge:
 
-    """A class for writing input discharge netCDF files for the 
-    Routing Application for Parallel Computation of Discharge (RAPID) model.
+    """A class for writing input discharge netCDF files (initial conditions
+    and forcing) for the Routing Application for Parallel Computation of 
+    Discharge (RAPID) model.
     """
 
     def __init__(self,
@@ -25,57 +26,69 @@ class RAPIDInputDischarge:
                  rivid_file=None,
                  input_discharge_time_axis=0,
                  input_discharge_time_index=-1,
-                 discharge_datatype='f8', rivid_datatype='i4',
-                 time_datatype='i8', latlon_datatype='f8',
+                 discharge_datatype='f8',
+                 rivid_datatype='i4',
+                 time_datatype='i8',
+                 latlon_datatype='f8',
                  crs_datatype='i4',
                  time_units='seconds since 1970-01-01 00:00:00',
                  discharge_variable_name='Qout',
                  time_variable_name='time',
                  rivid_variable_name='rivid',
                  latitude_variable_name='lat',
-                 longitude_variable_name='longitude',
+                 longitude_variable_name='lon',
                  integration_type='mean'):
         """
         Parameters
         ----------
-        output_filename : str
+        output_filename : str (optional)
             Name of output file.
-        discharge : array_like
+        input_file_list : list (optional)
+            List of input discharge (netCDF) filenames.
+        discharge : array_like (optional)
             Discharge values.
-        time : array_like
+        time : array_like (optional)
             Integer times corresponding to discharge.
-        rivid : array_like
+        rivid : array_like (optional)
             Identifiers for river segments.
-        latitude : array_like
-            Latitude coordinates.
-        longitude : array_like
-            Longitude coordinates.
-        input_discharge_file=None,
-        rivid_file=None, 
-        input_discharge_time_axis=0,
-        input_discharge_time_index=-1,
-        discharge_datatype : str
+        latitude : array_like (optional)
+            Latitude coordinate associated with each stream reach.
+        longitude : array_like (optional)
+            Longitude coordinate associated with each stream reach.
+        input_discharge_file : str (optional)
+            Name of (netCDF) file containing discharge values.
+        rivid_file : str (optional)
+            Name of (text) file containing ordered list of river identifiers
+            for locations where discharge should be extracted/reported.
+        input_discharge_time_axis : int (optional)
+            Discharge array axis corresponding to the time dimension.
+        input_discharge_time_index : int (optional)
+            Index along the time axis where values should be extracted from 
+            a discharge array.
+        discharge_datatype : str (optional)
             Data type to be used for writing discharge variable.
-        rivid_datatype : str
+        rivid_datatype : str (optional)
             Data type to be used for writing rivid variable.
-        time_datatype : str
+        time_datatype : str (optional)
             Data type to be used for writing time variable.
-        latlon_datatype : str
+        latlon_datatype : str (optional)
             Data type to be used for writing lat/lon variables.
-        crs_datatype : str
+        crs_datatype : str (optional)
             Data type to be used for writing coordinate reference variable.
-        time_units : str
-            Units and datum for time' variable.
-        discharge_variable_name : str
+        time_units : str (optional)
+            Units and datum for time variable.
+        discharge_variable_name : str (optional)
             Name of discharge variable to be used in output file.
-        time_variable_name : str
+        time_variable_name : str (optional)
             Name of time variable to be used in output file.
-        rivid_variable_name : str
+        rivid_variable_name : str (optional)
             Name of rivid variable to be used in output file.
-        latitude_variable_name : str
+        latitude_variable_name : str (optional)
             Name of latitude variable to be used in output file.
-        longitude_variable_name : str
+        longitude_variable_name : str (optional)
             Name of longitude variable to be used in output file.
+        integration_type : str (optional)
+            Method to be used for integrating discharge from multiple files.
         """
         self.output_filename = output_filename
         self.input_file_list = input_file_list
@@ -103,6 +116,7 @@ class RAPIDInputDischarge:
         self.longitude_variable_name = longitude_variable_name
         self.integration_type = integration_type
 
+        # Determine slice to be used for input discharge 
         if self.input_discharge_time_axis == 0:
             self.input_discharge_slice = (
                 slice(self.input_discharge_time_index,None, None),
@@ -114,8 +128,22 @@ class RAPIDInputDischarge:
 
     def write_nc(self, discharge=None, time=None, rivid=None, latitude=None,
                  longitude=None, output_filename=None):
-        """
-        Write variables, dimensions, and attributes to output file.
+        """Write variables, dimensions, and attributes to output file.
+
+        Parameters
+        ----------
+        discharge : array_like (optional)
+            Discharge values.
+        time : array_like (optional)
+            Integer times corresponding to discharge.
+        rivid : array_like (optional)
+            Identifiers for river segments.
+        latitude : array_like (optional)
+            Latitude coordinate associated with each stream reach.
+        longitude : array_like (optional)
+            Longitude coordinate associated with each stream reach.
+        output_filename : str (optional)
+            Name of output file.
         """
         if discharge is not None:
             self.discharge = discharge
@@ -130,6 +158,7 @@ class RAPIDInputDischarge:
         if output_filename is not None:
             self.output_filename = output_filename
 
+        # Input discharge files should only contain a single time step.
         nt = 1
 
         if self.rivid is not None:
@@ -139,12 +168,12 @@ class RAPIDInputDischarge:
 
         data_out_nc = Dataset(self.output_filename, 'w')
 
-        # create dimensions
+        # Create dimensions
         data_out_nc.createDimension(self.time_variable_name, nt)
         data_out_nc.createDimension(self.rivid_variable_name, nr)
 
-        # create variables
-        # discharge
+        # Create variables
+        # Discharge
         discharge_var = data_out_nc.createVariable(
             self.discharge_variable_name, self.discharge_datatype,
             (self.time_variable_name, self.rivid_variable_name),
@@ -152,7 +181,8 @@ class RAPIDInputDischarge:
         discharge_var.long_name = ('instantaneous river water discharge ' +
                                    'downstream of each river reach')
         discharge_var.units = 'm3 s-1'
-        discharge_var.coordinates = 'lon lat'
+        discharge_var.coordinates = f'{self.longitude_variable_name} ' + \
+                                    f'{self.latitude_variable_name}'
         discharge_var.grid_mapping = 'crs'
         discharge_var.cell_methods = "time: point"
         if self.discharge is not None:
@@ -168,11 +198,11 @@ class RAPIDInputDischarge:
         if self.rivid is not None:
             rivid_var[:] = self.rivid
 
-        # time
+        # Time
         time_var = data_out_nc.createVariable(
-            self.time_variable_name, self.time_datatype, ('time',),
-            fill_value=-9999.0)
-        time_var.long_name = self.time_variable_name,
+            self.time_variable_name, self.time_datatype,
+            (self.time_variable_name,), fill_value=-9999.0)
+        time_var.long_name = 'time'
         time_var.standard_name = 'time'
         time_var.units = self.time_units
         time_var.axis = 'T'
@@ -183,9 +213,10 @@ class RAPIDInputDischarge:
         else:
             time_var[:] = np.array([-9999.0])
 
-        # longitude
-        lon_var = data_out_nc.createVariable('lon', 'f8', ('rivid',),
-                                             fill_value=-9999.0)
+        # Longitude
+        lon_var = data_out_nc.createVariable(
+            self.longitude_variable_name, self.latlon_datatype,
+            (self.rivid_variable_name,), fill_value=-9999.0)
         lon_var.long_name = \
             'longitude of a point related to each river reach'
         lon_var.standard_name = 'longitude'
@@ -194,9 +225,10 @@ class RAPIDInputDischarge:
         if self.longitude is not None:
             lon_var[:] = self.longitude
 
-        # latitude
-        lat_var = data_out_nc.createVariable('lat', 'f8', ('rivid',),
-                                             fill_value=-9999.0)
+        # Latitude
+        lat_var = data_out_nc.createVariable(
+            self.latitude_variable_name, self.latlon_datatype,
+            (self.rivid_variable_name,), fill_value=-9999.0)
         lat_var.long_name = \
             'latitude of a point related to each river reach'
         lat_var.standard_name = 'latitude'
@@ -215,12 +247,22 @@ class RAPIDInputDischarge:
         # History
         data_out_nc.history = f'date_created: {datetime.utcnow()}'
 
-        # close file
+        # Close file
         data_out_nc.close()
 
     def parse_input_discharge_file(self, input_discharge_file=None,
                                    discharge_only=False):
-
+        """Extract subset of discharge and (optionally) associated variables
+        (time, rivid) from netCDF file.
+        
+        Parameters
+        ----------
+        input_discharge_file : str (optional)
+            Name of (netCDF) file containing discharge values.
+        discharge_only : bool (optional)
+            If True, only extract discharge values. Otherwise, additionally
+            extract time and rivid values.
+        """
         if input_discharge_file is not None:
             self.input_discharge_file = input_discharge_file
 
@@ -275,7 +317,19 @@ class RAPIDInputDischarge:
                 self.time = next_time
 
     def parse_rivid_file(self, rivid_file=None, delimiter=',', usecols=0):
+        """Extract rivid values from a text file. Values in file are assumed
+        to be organized in a rectangular array.
 
+        Parameters
+        ----------
+        rivid_file : str (optional)
+            Name of (text) file containing river identifiers in a single column.
+        delimiter : str (optional)
+            Character indicating how values are separated within `rivid_file`.
+        usecols : int (optional)
+            Index of 
+        usecols : int (optiona)
+        """
         if rivid_file is not None:
             self.rivid_file = rivid_file
 
@@ -289,7 +343,17 @@ class RAPIDInputDischarge:
 
     def sort_discharge_by_rivid(self, input_discharge_file=None,
                                 rivid=None, rivid_file=None):
+        """Filter and order the discharge according to the rivid array.
 
+        Parameters
+        ----------
+        input_discharge_file : str (optional)
+            Name of (netCDF) file containing discharge values.
+        rivid : array_like (optional)
+            River segment identifiers to be used for filtering and ordering.
+        rivid_file : str (optional)
+            Name of (text) file containing river identifiers in a single column.
+        """
         if input_discharge_file is not None:
             self.parse_input_discharge_file(
                 input_discharge_file=input_discharge_file)
@@ -335,6 +399,10 @@ class RAPIDInputDischarge:
             self.discharge = extracted_discharge
 
     def calculate_mean_input_discharge(self):
+        """Calculate mean discharge for a list of netCDF files. It is assumed
+        that the discharge variable array in each file has the same 
+        (time, rivid) coordinates.
+        """
         try:
             nfile = len(self.input_file_list)
         except:
@@ -354,6 +422,13 @@ class RAPIDInputDischarge:
             self.input_discharge = input_discharge / nfile
 
     def integrate_over_files(self, integration_type=None):
+        """Integrate discharge values over a list of files.
+        
+        Parameters
+        ----------
+        integration_type : str (optional)
+            Identifier for integration method to be used.
+        """
         if integration_type is not None:
             self.integration_type = integration_type
 
@@ -364,6 +439,16 @@ class RAPIDInputDischarge:
                           'recognized.')
 
     def main(self, output_filename=None):
+        """Main method for the RAPIDInputDischarge class. Writes a netCDF file
+        containing discharge and accompanying spatial variables for a single 
+        time based on discharge and spatial information provided to the class
+        constructor.
+        
+        Parameters
+        ----------
+        output_filename : str (optional)
+            Name of output file.
+        """
         if output_filename is not None:
             self.output_filename = output_filename
 
