@@ -1,14 +1,14 @@
 """Tools to write input input discharge files for RAPID."""
 
-import numpy as np
-from netCDF4 import Dataset
 from datetime import datetime
 import warnings
+import numpy as np
+from netCDF4 import Dataset
 
 class RAPIDInputDischarge:
 
     """A class for writing input discharge netCDF files (initial conditions
-    and forcing) for the Routing Application for Parallel Computation of 
+    and forcing) for the Routing Application for Parallel Computation of
     Discharge (RAPID) model.
     """
 
@@ -63,7 +63,7 @@ class RAPIDInputDischarge:
         input_discharge_time_axis : int (optional)
             Discharge array axis corresponding to the time dimension.
         input_discharge_time_index : int (optional)
-            Index along the time axis where values should be extracted from 
+            Index along the time axis where values should be extracted from
             a discharge array.
         discharge_datatype : str (optional)
             Data type to be used for writing discharge variable.
@@ -116,7 +116,7 @@ class RAPIDInputDischarge:
         self.longitude_variable_name = longitude_variable_name
         self.integration_type = integration_type
 
-        # Determine slice to be used for input discharge 
+        # Determine slice to be used for input discharge
         if self.input_discharge_time_axis == 0:
             self.input_discharge_slice = (
                 slice(self.input_discharge_time_index,None, None),
@@ -159,18 +159,18 @@ class RAPIDInputDischarge:
             self.output_filename = output_filename
 
         # Input discharge files should only contain a single time step.
-        nt = 1
+        ntime = 1
 
         if self.rivid is not None:
-            nr = len(self.rivid)
+            nrivid = len(self.rivid)
         else:
-            nr = None
+            nrivid = None
 
         data_out_nc = Dataset(self.output_filename, 'w')
 
         # Create dimensions
-        data_out_nc.createDimension(self.time_variable_name, nt)
-        data_out_nc.createDimension(self.rivid_variable_name, nr)
+        data_out_nc.createDimension(self.time_variable_name, ntime)
+        data_out_nc.createDimension(self.rivid_variable_name, nrivid)
 
         # Create variables
         # Discharge
@@ -236,7 +236,7 @@ class RAPIDInputDischarge:
         lat_var.axis = 'Y'
         if self.latitude is not None:
             lat_var[:] = self.latitude
-            
+
         # Coordinate reference system
         crs_var = data_out_nc.createVariable('crs', self.crs_datatype)
         crs_var.grid_mapping_name = 'latitude_longitude'
@@ -254,7 +254,7 @@ class RAPIDInputDischarge:
                                    discharge_only=False):
         """Extract subset of discharge and (optionally) associated variables
         (time, rivid) from netCDF file.
-        
+
         Parameters
         ----------
         input_discharge_file : str (optional)
@@ -267,15 +267,16 @@ class RAPIDInputDischarge:
             self.input_discharge_file = input_discharge_file
 
         try:
-            d = Dataset(self.input_discharge_file)
+            dataset = Dataset(self.input_discharge_file)
         except IOError:
             warnings.warn(
                 f'Unable to open file {self.input_discharge_file}.')
-            d = None
+            dataset = None
 
-        if d is not None:
+        if dataset is not None:
             try:
-                self.input_discharge = d[self.discharge_variable_name][
+                self.input_discharge = dataset[
+                    self.discharge_variable_name][
                     self.input_discharge_slice].squeeze()
             except (IOError, IndexError):
                 warnings.warn(
@@ -285,19 +286,19 @@ class RAPIDInputDischarge:
         if not discharge_only:
 
             try:
-                self.input_discharge_rivid = d['rivid'][:]
+                self.input_discharge_rivid = dataset['rivid'][:]
             except (IOError, IndexError):
                 warnings.warn(
-                    f'Variable "rivid" not found ' +
+                    'Variable "rivid" not found ' +
                     f'in file {self.input_discharge_file}.')
 
             try:
-                time_var = d['time']
+                time_var = dataset['time']
             except IOError:
                 warnings.warn(
-                    f'Variable "time" not found ' +
+                    'Variable "time" not found ' +
                     f'in file {self.input_discharge_file}.')
-                
+
             if time_var is not None:
                 try:
                     time_step = time_var[1] - time_var[0]
@@ -311,7 +312,7 @@ class RAPIDInputDischarge:
 
                 try:
                     next_time = final_time + time_step
-                except:
+                except TypeError:
                     next_time = np.array([])
 
                 self.time = next_time
@@ -327,7 +328,7 @@ class RAPIDInputDischarge:
         delimiter : str (optional)
             Character indicating how values are separated within `rivid_file`.
         usecols : int (optional)
-            Index of 
+            Index of
         usecols : int (optiona)
         """
         if rivid_file is not None:
@@ -337,7 +338,7 @@ class RAPIDInputDischarge:
             self.rivid = np.genfromtxt(
                 self.rivid_file, delimiter=delimiter, dtype=int,
                 usecols=usecols)
-        except:
+        except (FileNotFoundError, UnicodeDecodeError):
             warnings.warn(f'Unable to read file {self.rivid_file}.')
             self.rivid = None
 
@@ -400,12 +401,12 @@ class RAPIDInputDischarge:
 
     def calculate_mean_input_discharge(self):
         """Calculate mean discharge for a list of netCDF files. It is assumed
-        that the discharge variable array in each file has the same 
+        that the discharge variable array in each file has the same
         (time, rivid) coordinates.
         """
         try:
             nfile = len(self.input_file_list)
-        except:
+        except TypeError:
             nfile = None
 
         if nfile is not None:
@@ -414,16 +415,17 @@ class RAPIDInputDischarge:
 
             input_discharge = self.input_discharge
 
-            for f in self.input_file_list[1:]:
-                self.parse_input_discharge_file(input_discharge_file=f,
-                                                discharge_only=True)
+            for filename in self.input_file_list[1:]:
+                self.parse_input_discharge_file(
+                    input_discharge_file=filename,
+                    discharge_only=True)
                 input_discharge += self.input_discharge
 
             self.input_discharge = input_discharge / nfile
 
     def integrate_over_files(self, integration_type=None):
         """Integrate discharge values over a list of files.
-        
+
         Parameters
         ----------
         integration_type : str (optional)
@@ -440,10 +442,10 @@ class RAPIDInputDischarge:
 
     def main(self, output_filename=None):
         """Main method for the RAPIDInputDischarge class. Writes a netCDF file
-        containing discharge and accompanying spatial variables for a single 
+        containing discharge and accompanying spatial variables for a single
         time based on discharge and spatial information provided to the class
         constructor.
-        
+
         Parameters
         ----------
         output_filename : str (optional)
@@ -454,9 +456,9 @@ class RAPIDInputDischarge:
 
         try:
             nfile = len(self.input_file_list)
-        except:
+        except TypeError:
             nfile = None
-            
+
         if nfile is not None:
             self.integrate_over_files()
         elif self.input_discharge_file is not None:
@@ -464,12 +466,10 @@ class RAPIDInputDischarge:
 
         if self.rivid_file is not None:
             self.parse_rivid_file()
-        
+
         if self.rivid is None:
             self.rivid = self.input_discharge_rivid
 
         self.sort_discharge_by_rivid()
 
         self.write_nc()
-    
-   
