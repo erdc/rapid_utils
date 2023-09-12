@@ -7,5 +7,3 @@ dependencies:
   - numpy
   - python
   - pytest-cov
-
-
