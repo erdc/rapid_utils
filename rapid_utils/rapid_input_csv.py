@@ -163,32 +163,24 @@ def write_kfac_file(flowline_file,
     if input_slope_percent:
         slope_array /= 100.
 
+    k_ini_1_array = length_array / reference_celerity_m_per_s
+    length_slope_array = length_array / np.sqrt(slope_array)
+    eta_array = np.mean(k_ini_1_array) / np.mean(length_slope_array)
+
     # For K_ini^1:
     if formula_type == 1:
-        # Length in m divided by reference celerity.
-        kfac_array = length_array / reference_celerity_m_per_s
+        kfac_array = k_ini_1_array
 
     # For K_ini^2:
     if formula_type == 2:
-        k_ini_1_array = length_array / reference_celerity_m_per_s
-        length_slope_array = length_array / np.sqrt(slope_array)
-        eta_array = np.mean(k_ini_1_array) / np.mean(length_slope_array)
-
         kfac_array = eta_array*length_slope_array
 
     # For K_ini^3:
     if formula_type == 3:
-        k_ini_1_array = length_array / reference_celerity_m_per_s
-        length_slope_array = length_array / np.sqrt(slope_array)
         percentile_5 = np.percentile(length_slope_array, 5)
         percentile_95 = np.percentile(length_slope_array, 95)
-
-        # MPG: Why do we overwrite `length_slope_array` values with
-        # `percentile_5` and `percentile_95`?
         length_slope_array[length_slope_array < percentile_5] = percentile_5
         length_slope_array[length_slope_array > percentile_95] = percentile_95
-
-        eta_array = np.mean(k_ini_1_array) / np.mean(length_slope_array)
         kfac_array = eta_array*length_slope_array
 
     np.savetxt(out_csv_file, kfac_array, fmt='%.1f')

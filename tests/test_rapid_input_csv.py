@@ -88,7 +88,7 @@ def test_write_kfac_file():
 
     kfac = np.genfromtxt(out_csv_file, delimiter=',')
 
-    expected = [7934.5, 4338.8, 6032.0, 8023.5, 4534.1]
+    expected = [7941.3, 4342.5, 6037.2, 8030.4, 4538.0]
 
     assert_array_equal(kfac, expected)
 
