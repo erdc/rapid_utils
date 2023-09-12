@@ -1,0 +1,9 @@
+name: rapid_utils
+channels:
+  - conda-forge
+dependencies:
+  - geopandas
+  - netcdf4
+  - numpy
+  - python
+  - pytest-cov
