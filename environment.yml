@@ -1,0 +1,11 @@
+name: oony
+channels:
+  - conda-forge
+dependencies:
+  - geopandas
+  - netcdf4
+  - numpy
+  - python
+  - pytest-cov
+
+

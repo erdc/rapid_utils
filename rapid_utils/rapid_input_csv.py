@@ -94,19 +94,20 @@ def write_kfac_file(flowline_file,
                     flowline_id_field_name,
                     length_field_name,
                     slope_field_name,
-                    formula_type,
+                    formula_type=3,
+                    reference_celerity_m_per_s=1000.0/3600.0,
                     input_length_units='m',
                     input_slope_percent=False):
 
     """
     Write a Muskingum kfac file containing first guesses (in seconds) of the
     Muskingum k parameter. Three formula types are available, corresponing to
-    equations (5)–(7) in Tavakoly et al. 2016
+    equations (5)–(7) in Tavakoly et al. 2017
     (https://doi.org/10.1111/1752-1688.12456).
 
-    formula_type = 1 -> Tavakoly et al. 2016 Eq. (5)
-    formula_type = 2 -> Tavakoly et al. 2016 Eq. (6)
-    formula_type = 3 -> Tavakoly et al. 2016 Eq. (7)
+    formula_type = 1 -> Tavakoly et al. 2017 Eq. (5)
+    formula_type = 2 -> Tavakoly et al. 2017 Eq. (6)
+    formula_type = 3 -> Tavakoly et al. 2017 Eq. (7)
 
     Parameters
     ----------
@@ -128,6 +129,9 @@ def write_kfac_file(flowline_file,
         represented as a percentage (i.e., m/m * 100 or km/km * 100).
     formula_type : int
         The formula from Tavakoly et al. 2016 to be used.
+    reference_celerity_m_per_s : float, optional
+        Reference celerity in meters per second (David et al., 2013). Default
+        value is 1 kilometer per hour (1000 meter per 3600 seconds).
     input_length_units : str, optional
         The units of the input length. Supported units are 'm' for meters and
         'km' for kilometers. Default is 'm' for meters.
@@ -135,7 +139,6 @@ def write_kfac_file(flowline_file,
         If True, the slope provided on the flowline file is assumed to be a
         percentage and will be divided by 100. Default is False.
     """
-
     flowline_gdf = gpd.read_file(flowline_file)
     flowline_id_array = flowline_gdf[flowline_id_field_name].values
     flowline_id_list = list(flowline_id_array)
@@ -160,28 +163,32 @@ def write_kfac_file(flowline_file,
     if input_slope_percent:
         slope_array /= 100.
 
-    # For Kini1, divide each river length Li by the reference wave celerity
-    # C0 of 1 km per hour (1000 m per 3600 s):
+    # For K_ini^1:
     if formula_type == 1:
-        # Length in m divided by (1000 m per 3600 s)
-        kfac_array = length_array / (1000. / 3600.)
+        # Length in m divided by reference celerity.
+        kfac_array = length_array / reference_celerity_m_per_s
 
-    # For Kini2:
+    # For K_ini^2:
     if formula_type == 2:
-        k_ini_1_array = length_array / (1000. / 3600.)
-        length_slope_array = length_array / (slope_array**0.5)
+        k_ini_1_array = length_array / reference_celerity_m_per_s
+        length_slope_array = length_array / np.sqrt(slope_array)
         eta_array = np.mean(k_ini_1_array) / np.mean(length_slope_array)
+
         kfac_array = eta_array*length_slope_array
 
-    # For Kini3:
+    # For K_ini^3:
     if formula_type == 3:
-        k_ini_1_array = length_array / (1000. / 3600.)
-        length_slope_array = length_array/(slope_array**0.5)
+        k_ini_1_array = length_array / reference_celerity_m_per_s
+        length_slope_array = length_array / np.sqrt(slope_array)
         percentile_5 = np.percentile(length_slope_array, 5)
         percentile_95 = np.percentile(length_slope_array, 95)
+
+        # MPG: Why do we overwrite `length_slope_array` values with
+        # `percentile_5` and `percentile_95`?
         length_slope_array[length_slope_array < percentile_5] = percentile_5
         length_slope_array[length_slope_array > percentile_95] = percentile_95
-        eta_array = np.mean(k_ini_1_array)/np.mean(length_slope_array)
+
+        eta_array = np.mean(k_ini_1_array) / np.mean(length_slope_array)
         kfac_array = eta_array*length_slope_array
 
     np.savetxt(out_csv_file, kfac_array, fmt='%.1f')

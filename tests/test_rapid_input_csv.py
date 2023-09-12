@@ -83,7 +83,8 @@ def test_write_kfac_file():
     rapid_input_csv.write_kfac_file(flowline_file, connectivity_file,
                                     out_csv_file, flowline_id_field_name,
                                     length_field_name, slope_field_name,
-                                    formula_type, input_length_units)
+                                    formula_type=formula_type,
+                                    input_length_units=input_length_units)
 
     kfac = np.genfromtxt(out_csv_file, delimiter=',')
 
