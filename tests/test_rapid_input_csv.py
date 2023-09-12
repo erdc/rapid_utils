@@ -63,9 +63,72 @@ def test_write_riv_bas_id_file():
     assert_array_equal(riv_bas_id, expected)
 
 
-def test_write_kfac_file():
+def test_write_kfac_file_k_ini_1():
     """
-    Verify that write_kfac_file produces a kfac CSV consistent with benchmark.
+    Verify that write_kfac_file produces a kfac CSV consistent with benchmark
+    for `formula_type` 1.
+    """
+
+    flowline_file = os.path.join(DATA_DIR, 'nhdplusv2_sample',
+                                 'nhdplusv2_sample.shp')
+    connectivity_file = os.path.join(DATA_DIR, 'nhdplusv2_sample',
+                                     'nhdplusv2_sample_rapid_connect.csv')
+    out_csv_file = os.path.join(OUTPUT_DIR,
+                                'nhdplusv2_sample_kfac_test.csv')
+    flowline_id_field_name = 'COMID'
+    length_field_name = 'LENGTHKM'
+    slope_field_name = 'SLOPE'
+    formula_type = 1
+    input_length_units = 'km'
+
+    rapid_input_csv.write_kfac_file(flowline_file, connectivity_file,
+                                    out_csv_file, flowline_id_field_name,
+                                    length_field_name, slope_field_name,
+                                    formula_type=formula_type,
+                                    input_length_units=input_length_units)
+
+    kfac = np.genfromtxt(out_csv_file, delimiter=',')
+
+    expected = [4795.2, 3517.2, 7916.4, 8038.8, 6595.2]
+
+    assert_array_equal(kfac, expected)
+
+
+def test_write_kfac_file_k_ini_2():
+    """
+    Verify that write_kfac_file produces a kfac CSV consistent with benchmark
+    for `formula_type` 2.
+    """
+
+    flowline_file = os.path.join(DATA_DIR, 'nhdplusv2_sample',
+                                 'nhdplusv2_sample.shp')
+    connectivity_file = os.path.join(DATA_DIR, 'nhdplusv2_sample',
+                                     'nhdplusv2_sample_rapid_connect.csv')
+    out_csv_file = os.path.join(OUTPUT_DIR,
+                                'nhdplusv2_sample_kfac_test.csv')
+    flowline_id_field_name = 'COMID'
+    length_field_name = 'LENGTHKM'
+    slope_field_name = 'SLOPE'
+    formula_type = 2
+    input_length_units = 'km'
+
+    rapid_input_csv.write_kfac_file(flowline_file, connectivity_file,
+                                    out_csv_file, flowline_id_field_name,
+                                    length_field_name, slope_field_name,
+                                    formula_type=formula_type,
+                                    input_length_units=input_length_units)
+
+    kfac = np.genfromtxt(out_csv_file, delimiter=',')
+
+    expected = [7941.3, 4293.7, 6037.2, 8052.7, 4538.0]
+
+    assert_array_equal(kfac, expected)
+
+
+def test_write_kfac_file_k_ini_3():
+    """
+    Verify that write_kfac_file produces a kfac CSV consistent with benchmark
+    for `formula_type` 3.
     """
 
     flowline_file = os.path.join(DATA_DIR, 'nhdplusv2_sample',
