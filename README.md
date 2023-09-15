@@ -87,7 +87,7 @@ with each river reach in the stream network. The values in the column should
 have the same ordering as the corresponding identifiers in the first column of
 the `rapid_connect` file.
 
-**riv_bas_id**
+**riv_bas_id (CSV)**
 This file contains a single column whose values are the reach identifiers to be
 used for a simulation. This may be all of the reaches in the first column of
 the `rapid_connect` file or a subdomain. An upstream to downstream ordering
