@@ -148,7 +148,7 @@ def write_kfac_file(flowline_file,
 
     # The kfac file must be ordered the same as the connectivity file
     # Reorder flowline_gdf to match the order of connect_rivid_array
-    flowline_gdf = flowline_gdf.set_index('COMID') \
+    flowline_gdf = flowline_gdf.set_index(flowline_id_field_name) \
     .reindex(connect_rivid_array).reset_index()
 
     # Read the length and slope arrays that are ordered as in the connectivity
