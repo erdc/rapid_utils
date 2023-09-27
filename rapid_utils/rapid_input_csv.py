@@ -101,7 +101,7 @@ def write_kfac_file(flowline_file,
 
     """
     Write a Muskingum kfac file containing first guesses (in seconds) of the
-    Muskingum k parameter. Three formula types are available, corresponing to
+    Muskingum k parameter. Three formula types are available, corresponding to
     equations (5)–(7) in Tavakoly et al. 2017
     (https://doi.org/10.1111/1752-1688.12456).
 
@@ -147,16 +147,14 @@ def write_kfac_file(flowline_file,
                                         usecols=0, dtype=int)
 
     # The kfac file must be ordered the same as the connectivity file
-    # Rewrite the length and slope arrays to ensure this requirement is met
+    # Reorder flowline_gdf to match the order of connect_rivid_array
+    flowline_gdf = flowline_gdf.set_index(flowline_id_field_name) \
+    .reindex(connect_rivid_array).reset_index()
+
+    # Read the length and slope arrays that are ordered as in the connectivity
+    # file
     length_array = flowline_gdf[length_field_name].values
     slope_array = flowline_gdf[slope_field_name].values
-
-    sort_idx = []
-    for connect_rivid in connect_rivid_array:
-        sort_idx.append(flowline_id_list.index(connect_rivid))
-
-    length_array = length_array[sort_idx]
-    slope_array = slope_array[sort_idx]
 
     if input_length_units == 'km':
         length_array *= 1000.
