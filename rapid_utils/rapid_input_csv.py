@@ -3,7 +3,7 @@
 from csv import writer as csv_writer
 import numpy as np
 import geopandas as gpd
-
+import os
 
 def write_connectivity_file(flowline_file,
                             flowline_id_field_name,
@@ -55,8 +55,8 @@ def write_connectivity_file(flowline_file,
                 np.array([flowline_id, downstream_id,
                           count_upstream]), list_upstream_id]).astype(int))
 
-    with open(out_csv_file, 'w', encoding='utf-8') as csv_file:
-        connectivity_writer = csv_writer(csv_file)
+    with open(out_csv_file, 'w', encoding='utf-8', newline='') as csv_file:
+        connectivity_writer = csv_writer(csv_file, lineterminator=os.linesep)
         for row_list in list_write:
             out = np.concatenate([row_list, np.repeat(0, max_count_upstream -
                                                       row_list[2])])
