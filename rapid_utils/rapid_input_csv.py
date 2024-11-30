@@ -3,7 +3,7 @@
 from csv import writer as csv_writer
 import numpy as np
 import geopandas as gpd
-
+import os
 
 def write_connectivity_file(flowline_file,
                             flowline_id_field_name,
@@ -55,8 +55,8 @@ def write_connectivity_file(flowline_file,
                 np.array([flowline_id, downstream_id,
                           count_upstream]), list_upstream_id]).astype(int))
 
-    with open(out_csv_file, 'w', encoding='utf-8') as csv_file:
-        connectivity_writer = csv_writer(csv_file)
+    with open(out_csv_file, 'w', encoding='utf-8', newline='') as csv_file:
+        connectivity_writer = csv_writer(csv_file, lineterminator=os.linesep)
         for row_list in list_write:
             out = np.concatenate([row_list, np.repeat(0, max_count_upstream -
                                                       row_list[2])])
@@ -101,7 +101,7 @@ def write_kfac_file(flowline_file,
 
     """
     Write a Muskingum kfac file containing first guesses (in seconds) of the
-    Muskingum k parameter. Three formula types are available, corresponing to
+    Muskingum k parameter. Three formula types are available, corresponding to
     equations (5)–(7) in Tavakoly et al. 2017
     (https://doi.org/10.1111/1752-1688.12456).
 
@@ -147,16 +147,14 @@ def write_kfac_file(flowline_file,
                                         usecols=0, dtype=int)
 
     # The kfac file must be ordered the same as the connectivity file
-    # Rewrite the length and slope arrays to ensure this requirement is met
+    # Reorder flowline_gdf to match the order of connect_rivid_array
+    flowline_gdf = flowline_gdf.set_index(flowline_id_field_name) \
+    .reindex(connect_rivid_array).reset_index()
+
+    # Read the length and slope arrays that are ordered as in the connectivity
+    # file
     length_array = flowline_gdf[length_field_name].values
     slope_array = flowline_gdf[slope_field_name].values
-
-    sort_idx = []
-    for connect_rivid in connect_rivid_array:
-        sort_idx.append(flowline_id_list.index(connect_rivid))
-
-    length_array = length_array[sort_idx]
-    slope_array = slope_array[sort_idx]
 
     if input_length_units == 'km':
         length_array *= 1000.
