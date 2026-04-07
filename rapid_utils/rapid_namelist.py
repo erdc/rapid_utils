@@ -324,6 +324,7 @@ class RAPIDNamelist:
                 f.write(f'{name} = {value}\n')
 
             f.write(end_char)
+        print(f"Filename: {self.output_filename}")
 
     def update_params(self, new_param_dict, purge=False):
         """Add or modify `params` dictionary entries.
@@ -535,17 +536,17 @@ class RAPIDNamelist:
     def main(self):
         """Update parameters from RAPID input files and write namelist."""
 
-        new_params = {}
-
         if self.input_filename is not None:
             params = self.read_namelist(self.input_filename)
-            new_params.update(params)
+            self.update_params(params)
 
         parsers = [self.parse_riv_bas_id_file,
                    self.parse_connectivity_file,
                    self.parse_forcing_tot_file,
                    self.parse_forcing_use_file,
                    self.parse_vlat_file]
+
+        new_params = {}
 
         for fn in parsers:
             parsed = fn()
